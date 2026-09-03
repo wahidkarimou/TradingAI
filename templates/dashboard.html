@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signaux — TradingAI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D1117;
+    --panel: #141A22;
+    --panel-border: #232B36;
+    --text: #E6EDF3;
+    --muted: #7D8590;
+    --buy: #3FB950;
+    --sell: #F85149;
+    --wait: #C9973F;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    padding: 0 24px 60px;
+  }
+  header {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 48px 0 28px;
+  }
+  header h1 {
+    font-size: 28px;
+    font-weight: 600;
+    margin: 0 0 6px;
+    letter-spacing: -0.02em;
+  }
+  header p {
+    color: var(--muted);
+    margin: 0;
+    font-size: 14px;
+  }
+  .latest {
+    max-width: 980px;
+    margin: 0 auto 32px;
+  }
+  .latest-card {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    padding: 28px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .latest-symbol { font-size: 15px; color: var(--muted); margin-bottom: 6px; }
+  .latest-price {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 40px;
+    font-weight: 500;
+  }
+  .latest-signal {
+    font-size: 15px;
+    font-weight: 600;
+    padding: 6px 16px;
+    border-radius: 20px;
+    display: inline-block;
+  }
+  .signal-BUY { color: var(--buy); background: rgba(63,185,80,0.12); }
+  .signal-SELL { color: var(--sell); background: rgba(248,81,73,0.12); }
+  .signal-WAIT { color: var(--wait); background: rgba(201,151,63,0.12); }
+  .levels {
+    display: flex;
+    gap: 28px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+  }
+  .levels div span { display: block; color: var(--muted); font-family: 'Space Grotesk', sans-serif; font-size: 12px; margin-bottom: 4px; }
+
+  table {
+    max-width: 980px;
+    margin: 0 auto;
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  thead th {
+    text-align: left;
+    color: var(--muted);
+    font-weight: 500;
+    font-size: 12px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--panel-border);
+  }
+  tbody td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--panel-border);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  tbody tr:hover { background: rgba(255,255,255,0.02); }
+  .empty {
+    max-width: 980px;
+    margin: 60px auto;
+    text-align: center;
+    color: var(--muted);
+  }
+  .badge {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 3px 10px;
+    border-radius: 12px;
+  }
+  .confidence-dots span { opacity: 0.25; }
+  .confidence-dots .filled { opacity: 1; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Signaux de marché</h1>
+  <p>XAUUSD · EURUSD · BTCUSD — swing trading, mise à jour à chaque alerte TradingView</p>
+</header>
+
+{% if signals %}
+  <div class="latest" style="display:flex; gap:20px; flex-wrap:wrap;">
+    {% for tf_label, last in [("H4", latest_h4), ("H1", latest_h1)] %}
+      {% if last %}
+      <div class="latest-card" style="flex:1; min-width:400px;">
+        <div>
+          <div class="latest-symbol">{{ last.symbol }} · {{ tf_label }} — dernier signal</div>
+          <div class="latest-price">{{ "%.5f"|format(last.price) if last.price else "—" }}</div>
+        </div>
+        <div>
+          <span class="latest-signal signal-{{ last.signal }}">{{ last.signal }}</span>
+          <div class="confidence-dots" style="margin-top:8px; color:var(--muted); font-size:12px;">
+            Confiance :
+            {% for i in range(1,4) %}<span class="{{ 'filled' if i <= last.confidence else '' }}">●</span>{% endfor %}
+          </div>
+        </div>
+        <div class="levels">
+          <div><span>Entrée</span>{{ "%.5f"|format(last.price) if last.price else "—" }}</div>
+          <div><span>Stop Loss</span>{{ "%.5f"|format(last.sl) if last.sl else "—" }}</div>
+          <div><span>Take Profit</span>{{ "%.5f"|format(last.tp) if last.tp else "—" }}</div>
+          <div><span>RSI</span>{{ last.rsi if last.rsi else "—" }}</div>
+        </div>
+      </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Heure (UTC)</th>
+        <th>Actif</th>
+        <th>TF</th>
+        <th>Signal</th>
+        <th>Prix</th>
+        <th>SL</th>
+        <th>TP</th>
+        <th>Tendance</th>
+        <th>Momentum</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in signals %}
+      <tr>
+        <td>{{ s.timestamp.replace("T", " ") }}</td>
+        <td>{{ s.symbol }}</td>
+        <td>{{ s.timeframe }}</td>
+        <td><span class="badge signal-{{ s.signal }}">{{ s.signal }}</span></td>
+        <td>{{ "%.5f"|format(s.price) if s.price else "—" }}</td>
+        <td>{{ "%.5f"|format(s.sl) if s.sl else "—" }}</td>
+        <td>{{ "%.5f"|format(s.tp) if s.tp else "—" }}</td>
+        <td>{{ s.trend }}</td>
+        <td>{{ s.momentum }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <div class="empty">
+    Aucun signal encore reçu. Configure une alerte TradingView vers <code>/webhook</code>,
+    ou teste manuellement via <code>/analyze/XAUUSD</code>.
+  </div>
+{% endif %}
+
+</body>
+</html>
