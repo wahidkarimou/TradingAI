@@ -1,6 +1,7 @@
 """Stockage SQLite de l'historique des signaux générés."""
 
 import sqlite3
+import json
 from pathlib import Path
 from datetime import datetime
 
@@ -18,15 +19,24 @@ def init_db():
             symbol TEXT NOT NULL,
             timeframe TEXT NOT NULL DEFAULT 'H4',
             signal TEXT NOT NULL,
-            confidence INTEGER,
+            confluence INTEGER,
+            setup_quality TEXT,
             price REAL,
             sl REAL,
-            tp REAL,
+            tp1 REAL,
+            tp2 REAL,
+            invalidation TEXT,
             trend TEXT,
             momentum TEXT,
             rsi REAL,
             support REAL,
-            resistance REAL
+            resistance REAL,
+            regime TEXT,
+            adx REAL,
+            structure_pattern TEXT,
+            bos TEXT,
+            volatility_state TEXT,
+            mtf_json TEXT
         )
         """
     )
@@ -39,23 +49,34 @@ def save_signal(result: dict):
     conn.execute(
         """
         INSERT INTO signals
-        (timestamp, symbol, timeframe, signal, confidence, price, sl, tp, trend, momentum, rsi, support, resistance)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (timestamp, symbol, timeframe, signal, confluence, setup_quality, price, sl, tp1, tp2,
+         invalidation, trend, momentum, rsi, support, resistance, regime, adx,
+         structure_pattern, bos, volatility_state, mtf_json)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             datetime.utcnow().isoformat(timespec="seconds"),
             result["symbol"],
             result.get("timeframe", "H4"),
             result["signal"],
-            result["confidence"],
+            result.get("confluence"),
+            result.get("setup_quality"),
             result["price"],
             result["sl"],
-            result["tp"],
+            result.get("tp1"),
+            result.get("tp2"),
+            result.get("invalidation"),
             result["trend"],
             result["momentum"],
             result["rsi"],
             result["support"],
             result["resistance"],
+            result.get("regime"),
+            result.get("adx"),
+            result.get("structure_pattern"),
+            result.get("bos"),
+            result.get("volatility_state"),
+            json.dumps(result.get("mtf", {})),
         ),
     )
     conn.commit()
@@ -69,4 +90,12 @@ def get_all_signals(limit: int = 100):
         "SELECT * FROM signals ORDER BY id DESC LIMIT ?", (limit,)
     ).fetchall()
     conn.close()
-    return [dict(row) for row in rows]
+    results = []
+    for row in rows:
+        d = dict(row)
+        try:
+            d["mtf"] = json.loads(d.get("mtf_json") or "{}")
+        except (TypeError, ValueError):
+            d["mtf"] = {}
+        results.append(d)
+    return results

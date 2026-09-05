@@ -37,11 +37,15 @@ def analyze_manual(symbol, timeframe="H4"):
 
 @app.route("/", methods=["GET"])
 def dashboard():
-    signals = database.get_all_signals(limit=150)
-    latest_h4 = next((s for s in signals if s.get("timeframe") == "H4"), None)
-    latest_h1 = next((s for s in signals if s.get("timeframe") == "H1"), None)
+    selected_symbol = request.args.get("symbol", "XAUUSD").upper()
+    all_signals = database.get_all_signals(limit=300)
+    signals = [s for s in all_signals if s["symbol"] == selected_symbol]
+    latest = signals[0] if signals else None
     return render_template(
-        "dashboard.html", signals=signals, latest_h4=latest_h4, latest_h1=latest_h1
+        "dashboard.html",
+        signals=signals[:100],
+        latest=latest,
+        selected_symbol=selected_symbol,
     )
 
 

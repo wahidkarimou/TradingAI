@@ -3,189 +3,232 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Signaux — TradingAI</title>
+<title>TradingAI — Terminal de signaux</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0D1117;
-    --panel: #141A22;
-    --panel-border: #232B36;
+    --bg: #0A0E14;
+    --panel: #10151D;
+    --panel-border: #212A36;
     --text: #E6EDF3;
-    --muted: #7D8590;
+    --muted: #6B7789;
     --buy: #3FB950;
     --sell: #F85149;
     --wait: #C9973F;
+    --accent: #58A6FF;
   }
   * { box-sizing: border-box; }
   body {
     margin: 0;
     background: var(--bg);
     color: var(--text);
-    font-family: 'Space Grotesk', sans-serif;
-    padding: 0 24px 60px;
+    font-family: 'IBM Plex Mono', monospace;
+    padding: 0 20px 60px;
   }
   header {
-    max-width: 980px;
+    max-width: 1080px;
     margin: 0 auto;
-    padding: 48px 0 28px;
+    padding: 40px 0 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 10px;
   }
   header h1 {
-    font-size: 28px;
-    font-weight: 600;
-    margin: 0 0 6px;
-    letter-spacing: -0.02em;
-  }
-  header p {
-    color: var(--muted);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
     margin: 0;
-    font-size: 14px;
+    letter-spacing: 0.02em;
   }
-  .latest {
-    max-width: 980px;
-    margin: 0 auto 32px;
+  header p { color: var(--muted); margin: 4px 0 0; font-size: 13px; }
+
+  .asset-selector {
+    max-width: 1080px;
+    margin: 0 auto 20px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
   }
-  .latest-card {
+  .asset-selector a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    padding: 6px 14px;
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+  }
+  .asset-selector a.active { color: var(--accent); border-color: var(--accent); }
+
+  .card {
+    max-width: 1080px;
+    margin: 0 auto 20px;
     background: var(--panel);
     border: 1px solid var(--panel-border);
     border-radius: 10px;
-    padding: 28px 32px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 24px;
-    flex-wrap: wrap;
+    padding: 24px 28px;
   }
-  .latest-symbol { font-size: 15px; color: var(--muted); margin-bottom: 6px; }
-  .latest-price {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 40px;
-    font-weight: 500;
+  .card-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 14px;
   }
-  .latest-signal {
-    font-size: 15px;
-    font-weight: 600;
-    padding: 6px 16px;
-    border-radius: 20px;
-    display: inline-block;
+
+  .grid2 { max-width: 1080px; margin: 0 auto 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid2 .card { margin: 0; }
+  @media (max-width: 800px) { .grid2 { grid-template-columns: 1fr; } }
+
+  .regime-value {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+  }
+  .regime-Bullish-Trend, .regime-Bullish { color: var(--buy); }
+  .regime-Bearish-Trend, .regime-Bearish { color: var(--sell); }
+  .regime-Range, .regime-Neutre { color: var(--wait); }
+
+  .mtf-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; font-size: 13px; }
+  .mtf-label { width: 32px; color: var(--muted); font-weight: 600; }
+  .mtf-bar { flex: 1; height: 8px; background: #1B222C; border-radius: 4px; overflow: hidden; }
+  .mtf-fill { height: 100%; border-radius: 4px; }
+  .mtf-bias { width: 220px; text-align: right; }
+
+  .structure-line { font-size: 13px; margin-bottom: 8px; color: var(--muted); }
+  .structure-line b { color: var(--text); }
+
+  .signal-block { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px; }
+  .signal-badge {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    padding: 8px 20px;
+    border-radius: 8px;
   }
   .signal-BUY { color: var(--buy); background: rgba(63,185,80,0.12); }
   .signal-SELL { color: var(--sell); background: rgba(248,81,73,0.12); }
   .signal-WAIT { color: var(--wait); background: rgba(201,151,63,0.12); }
-  .levels {
-    display: flex;
-    gap: 28px;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 14px;
-  }
-  .levels div span { display: block; color: var(--muted); font-family: 'Space Grotesk', sans-serif; font-size: 12px; margin-bottom: 4px; }
 
-  table {
-    max-width: 980px;
-    margin: 0 auto;
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 14px;
-  }
-  thead th {
-    text-align: left;
-    color: var(--muted);
-    font-weight: 500;
-    font-size: 12px;
-    padding: 10px 14px;
-    border-bottom: 1px solid var(--panel-border);
-  }
-  tbody td {
-    padding: 12px 14px;
-    border-bottom: 1px solid var(--panel-border);
-    font-family: 'IBM Plex Mono', monospace;
-  }
-  tbody tr:hover { background: rgba(255,255,255,0.02); }
-  .empty {
-    max-width: 980px;
-    margin: 60px auto;
-    text-align: center;
-    color: var(--muted);
-  }
-  .badge {
-    font-family: 'Space Grotesk', sans-serif;
-    font-weight: 600;
-    font-size: 13px;
-    padding: 3px 10px;
-    border-radius: 12px;
-  }
-  .confidence-dots span { opacity: 0.25; }
-  .confidence-dots .filled { opacity: 1; }
+  .levels-grid { display: grid; grid-template-columns: repeat(5, auto); gap: 24px; margin-top: 18px; }
+  .levels-grid div span { display: block; color: var(--muted); font-size: 11px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .levels-grid div b { font-size: 16px; }
+
+  .confluence-bar-wrap { margin-top: 18px; }
+  .confluence-bar { height: 14px; background: #1B222C; border-radius: 7px; overflow: hidden; margin-top: 6px; }
+  .confluence-fill { height: 100%; border-radius: 7px; background: linear-gradient(90deg, var(--sell), var(--wait), var(--buy)); }
+  .confluence-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
+
+  .invalidation { margin-top: 14px; font-size: 12px; color: var(--muted); }
+  .invalidation b { color: var(--sell); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th { text-align: left; color: var(--muted); font-weight: 500; font-size: 11px; padding: 8px 10px; border-bottom: 1px solid var(--panel-border); text-transform: uppercase; }
+  tbody td { padding: 10px; border-bottom: 1px solid var(--panel-border); }
+  .badge { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 12px; padding: 3px 10px; border-radius: 10px; }
+  .empty { max-width: 1080px; margin: 60px auto; text-align: center; color: var(--muted); }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>Signaux de marché</h1>
-  <p>XAUUSD · EURUSD · BTCUSD — swing trading, mise à jour à chaque alerte TradingView</p>
+  <div>
+    <h1>TradingAI</h1>
+    <p>Terminal de signaux swing — Régime · Structure · Multi-timeframe · Confluence</p>
+  </div>
 </header>
 
-{% if signals %}
-  <div class="latest" style="display:flex; gap:20px; flex-wrap:wrap;">
-    {% for tf_label, last in [("H4", latest_h4), ("H1", latest_h1)] %}
-      {% if last %}
-      <div class="latest-card" style="flex:1; min-width:400px;">
-        <div>
-          <div class="latest-symbol">{{ last.symbol }} · {{ tf_label }} — dernier signal</div>
-          <div class="latest-price">{{ "%.5f"|format(last.price) if last.price else "—" }}</div>
+<div class="asset-selector">
+  {% for a in ["XAUUSD", "EURUSD", "BTCUSD"] %}
+    <a href="/?symbol={{ a }}" class="{{ 'active' if a == selected_symbol else '' }}">{{ a }}</a>
+  {% endfor %}
+</div>
+
+{% if latest %}
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">Market Regime</div>
+      <div class="regime-value regime-{{ latest.regime|replace(' ', '-') }}">{{ latest.regime or "—" }}</div>
+      <div style="color:var(--muted); font-size:12px; margin-top:6px;">ADX : {{ latest.adx if latest.adx else "—" }} · Volatilité : {{ latest.volatility_state or "—" }}</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Multi-timeframe</div>
+      {% for tf in ["D1", "H4", "H1"] %}
+        {% set info = latest.mtf.get(tf) if latest.mtf else None %}
+        {% if info %}
+        <div class="mtf-row">
+          <div class="mtf-label">{{ tf }}</div>
+          <div class="mtf-bar"><div class="mtf-fill" style="width:{{ info.score }}%; background:{{ 'var(--buy)' if 'Bullish' in info.bias else ('var(--sell)' if 'Bearish' in info.bias else 'var(--wait)') }};"></div></div>
+          <div class="mtf-bias">{{ info.bias }}</div>
         </div>
-        <div>
-          <span class="latest-signal signal-{{ last.signal }}">{{ last.signal }}</span>
-          <div class="confidence-dots" style="margin-top:8px; color:var(--muted); font-size:12px;">
-            Confiance :
-            {% for i in range(1,4) %}<span class="{{ 'filled' if i <= last.confidence else '' }}">●</span>{% endfor %}
-          </div>
-        </div>
-        <div class="levels">
-          <div><span>Entrée</span>{{ "%.5f"|format(last.price) if last.price else "—" }}</div>
-          <div><span>Stop Loss</span>{{ "%.5f"|format(last.sl) if last.sl else "—" }}</div>
-          <div><span>Take Profit</span>{{ "%.5f"|format(last.tp) if last.tp else "—" }}</div>
-          <div><span>RSI</span>{{ last.rsi if last.rsi else "—" }}</div>
-        </div>
-      </div>
-      {% endif %}
-    {% endfor %}
+        {% endif %}
+      {% endfor %}
+    </div>
   </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Heure (UTC)</th>
-        <th>Actif</th>
-        <th>TF</th>
-        <th>Signal</th>
-        <th>Prix</th>
-        <th>SL</th>
-        <th>TP</th>
-        <th>Tendance</th>
-        <th>Momentum</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for s in signals %}
-      <tr>
-        <td>{{ s.timestamp.replace("T", " ") }}</td>
-        <td>{{ s.symbol }}</td>
-        <td>{{ s.timeframe }}</td>
-        <td><span class="badge signal-{{ s.signal }}">{{ s.signal }}</span></td>
-        <td>{{ "%.5f"|format(s.price) if s.price else "—" }}</td>
-        <td>{{ "%.5f"|format(s.sl) if s.sl else "—" }}</td>
-        <td>{{ "%.5f"|format(s.tp) if s.tp else "—" }}</td>
-        <td>{{ s.trend }}</td>
-        <td>{{ s.momentum }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div class="card">
+    <div class="card-title">Structure</div>
+    <div class="structure-line">Pattern : <b>{{ latest.structure_pattern or "—" }}</b></div>
+    <div class="structure-line">BOS confirmé : <b>{{ latest.bos or "aucun" }}</b></div>
+    <div class="structure-line">Support proche : <b>{{ latest.support }}</b> · Résistance proche : <b>{{ latest.resistance }}</b></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">{{ latest.symbol }} · {{ latest.timeframe }} — Signal</div>
+    <div class="signal-block">
+      <div>
+        <div style="font-size:32px; font-weight:700; font-family:'Space Grotesk',sans-serif;">{{ "%.5f"|format(latest.price) if latest.price else "—" }}</div>
+      </div>
+      <span class="signal-badge signal-{{ latest.signal }}">{{ latest.signal }}</span>
+    </div>
+
+    <div class="levels-grid">
+      <div><span>Entrée</span><b>{{ "%.5f"|format(latest.price) if latest.price else "—" }}</b></div>
+      <div><span>Stop Loss</span><b>{{ "%.5f"|format(latest.sl) if latest.sl else "—" }}</b></div>
+      <div><span>TP1 (1:1.5)</span><b>{{ "%.5f"|format(latest.tp1) if latest.tp1 else "—" }}</b></div>
+      <div><span>TP2 (1:2)</span><b>{{ "%.5f"|format(latest.tp2) if latest.tp2 else "—" }}</b></div>
+      <div><span>RSI</span><b>{{ latest.rsi if latest.rsi else "—" }}</b></div>
+    </div>
+
+    <div class="confluence-bar-wrap">
+      <div class="confluence-label"><span>Score de confluence</span><span>{{ latest.confluence or 0 }}/100 — Setup {{ latest.setup_quality or "—" }}</span></div>
+      <div class="confluence-bar"><div class="confluence-fill" style="width:{{ latest.confluence or 0 }}%;"></div></div>
+    </div>
+
+    {% if latest.invalidation %}
+    <div class="invalidation">Invalidation : <b>{{ latest.invalidation }}</b></div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card-title">Historique ({{ latest.symbol }})</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Heure (UTC)</th><th>TF</th><th>Signal</th><th>Prix</th><th>Confluence</th><th>Qualité</th><th>Régime</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in signals %}
+        <tr>
+          <td>{{ s.timestamp.replace("T", " ") }}</td>
+          <td>{{ s.timeframe }}</td>
+          <td><span class="badge signal-{{ s.signal }}">{{ s.signal }}</span></td>
+          <td>{{ "%.5f"|format(s.price) if s.price else "—" }}</td>
+          <td>{{ s.confluence if s.confluence is not none else "—" }}</td>
+          <td>{{ s.setup_quality or "—" }}</td>
+          <td>{{ s.regime or "—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 {% else %}
   <div class="empty">
-    Aucun signal encore reçu. Configure une alerte TradingView vers <code>/webhook</code>,
-    ou teste manuellement via <code>/analyze/XAUUSD</code>.
+    Aucun signal encore reçu pour {{ selected_symbol }}. Teste via <code>/analyze/{{ selected_symbol }}/H4</code>.
   </div>
 {% endif %}
 
