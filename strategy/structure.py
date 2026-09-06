@@ -39,7 +39,40 @@ def detect_swings(
             data.iloc[i, data.columns.get_loc("swing_low")] = True
 
     return data
+def enforce_alternation(df: pd.DataFrame) -> pd.DataFrame:
 
+    data = df.copy()
+    n = len(data)
+
+    pivots = []
+    for i in range(n):
+        if data["swing_high"].iloc[i]:
+            pivots.append([i, "H", float(data["High"].iloc[i])])
+        elif data["swing_low"].iloc[i]:
+            pivots.append([i, "L", float(data["Low"].iloc[i])])
+
+    filtered = []
+    for p in pivots:
+        if filtered and filtered[-1][1] == p[1]:
+            if p[1] == "H" and p[2] > filtered[-1][2]:
+                filtered[-1] = p
+            elif p[1] == "L" and p[2] < filtered[-1][2]:
+                filtered[-1] = p
+        else:
+            filtered.append(p)
+
+    new_high = [False] * n
+    new_low = [False] * n
+    for pos, kind, _ in filtered:
+        if kind == "H":
+            new_high[pos] = True
+        else:
+            new_low[pos] = True
+
+    data["swing_high"] = new_high
+    data["swing_low"] = new_low
+
+    return data
 
 def classify_swings(df: pd.DataFrame) -> pd.DataFrame:
 
@@ -90,6 +123,7 @@ def get_structure(df: pd.DataFrame) -> dict:
         }
 
     data = detect_swings(df)
+    data = enforce_alternation(data)
     data = classify_swings(data)
 
     swings = data[data["swing_type"].notna()].copy()
