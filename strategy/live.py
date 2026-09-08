@@ -57,35 +57,46 @@ def get_live_signal(symbol: str, threshold: int = 60) -> dict:
     regime = get_regime(h1_trend, h1_volatility)
     setup = get_setup(regime, h1_structure, h1_momentum)
 
-    direction = None
+    candidate_direction = None
     if h4_trend["direction"] == "BULLISH" and h1_momentum["direction"] == "BULLISH":
-        direction = "BULLISH"
+        candidate_direction = "BULLISH"
     elif h4_trend["direction"] == "BEARISH" and h1_momentum["direction"] == "BEARISH":
-        direction = "BEARISH"
+        candidate_direction = "BEARISH"
 
     entry = float(h1["Close"].iloc[-1])
 
-    if direction is None:
+    if candidate_direction is None:
         risk_result = {"entry": entry, "sl": None, "tp1": None, "tp2": None, "invalidation": None}
         confluence_result = {"score": 0, "breakdown": {}}
     else:
-        risk_result = get_risk(entry, h1_structure, h1_volatility["atr"], direction)
+        risk_result = get_risk(entry, h1_structure, h1_volatility["atr"], candidate_direction)
         mtf_directions = [d1_trend["direction"], h4_trend["direction"], h1_trend["direction"]]
         confluence_result = get_confluence(
-            direction, h1_structure, h1_trend, h1_momentum,
+            candidate_direction, h1_structure, h1_trend, h1_momentum,
             h1_volatility, mtf_directions, setup, risk_result
         )
 
-    if direction and confluence_result["score"] >= threshold and risk_result.get("sl") is not None:
-        signal = direction
+    if candidate_direction and confluence_result["score"] >= threshold and risk_result.get("sl") is not None:
+        signal = candidate_direction
     else:
         signal = "WAIT"
+
+    block_reason = None
+    if signal == "WAIT":
+        if h4_trend["direction"] != h1_momentum["direction"]:
+            block_reason = "H4 (tendance) et H1 (momentum) ne sont pas alignes"
+        elif candidate_direction and confluence_result["score"] < threshold:
+            block_reason = f"score de confluence {confluence_result['score']} < seuil {threshold}"
+        elif candidate_direction and risk_result.get("sl") is None:
+            block_reason = "aucun niveau de structure exploitable pour le stop loss"
 
     return {
         "symbol": symbol,
         "enabled": cfg["enabled"],
         "price": round(entry, 5),
         "signal": signal,
+        "candidate_direction": candidate_direction,
+        "block_reason": block_reason,
         "confluence_score": confluence_result["score"],
         "confluence_breakdown": confluence_result["breakdown"],
         "sl": risk_result.get("sl"),
@@ -97,7 +108,8 @@ def get_live_signal(symbol: str, threshold: int = 60) -> dict:
         "bos": h1_structure.get("bos"),
         "d1_direction": d1_trend["direction"],
         "h4_direction": h4_trend["direction"],
-        "h1_direction": h1_trend["direction"],
+        "h1_trend_direction": h1_trend["direction"],
+        "h1_momentum_direction": h1_momentum["direction"],
         "rsi": round(h1_momentum["rsi"], 2) if h1_momentum.get("rsi") is not None else None,
         "atr": round(h1_volatility["atr"], 5) if h1_volatility.get("atr") is not None else None
     }

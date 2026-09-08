@@ -18,6 +18,7 @@ def init_db():
             enabled INTEGER,
             price REAL,
             signal TEXT NOT NULL,
+            block_reason TEXT,
             confluence_score INTEGER,
             confluence_breakdown TEXT,
             sl REAL,
@@ -29,7 +30,8 @@ def init_db():
             bos TEXT,
             d1_direction TEXT,
             h4_direction TEXT,
-            h1_direction TEXT,
+            h1_trend_direction TEXT,
+            h1_momentum_direction TEXT,
             rsi REAL,
             atr REAL
         )
@@ -44,10 +46,10 @@ def save_signal(result: dict):
     conn.execute(
         """
         INSERT INTO signals
-        (timestamp, symbol, enabled, price, signal, confluence_score, confluence_breakdown,
+        (timestamp, symbol, enabled, price, signal, block_reason, confluence_score, confluence_breakdown,
          sl, tp1, tp2, invalidation, regime, structure_pattern, bos,
-         d1_direction, h4_direction, h1_direction, rsi, atr)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         d1_direction, h4_direction, h1_trend_direction, h1_momentum_direction, rsi, atr)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             datetime.utcnow().isoformat(timespec="seconds"),
@@ -55,6 +57,7 @@ def save_signal(result: dict):
             1 if result.get("enabled") else 0,
             result["price"],
             result["signal"],
+            result.get("block_reason"),
             result["confluence_score"],
             json.dumps(result.get("confluence_breakdown", {})),
             result.get("sl"),
@@ -66,7 +69,8 @@ def save_signal(result: dict):
             result.get("bos"),
             result.get("d1_direction"),
             result.get("h4_direction"),
-            result.get("h1_direction"),
+            result.get("h1_trend_direction"),
+            result.get("h1_momentum_direction"),
             result.get("rsi"),
             result.get("atr"),
         ),

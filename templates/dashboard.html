@@ -32,8 +32,9 @@
   .bar-wrap { margin-top:16px; }
   .bar { height:12px; background:#1B222C; border-radius:6px; overflow:hidden; margin-top:6px; }
   .fill { height:100%; background:linear-gradient(90deg,var(--sell),var(--wait),var(--buy)); }
+  .block-reason { margin-top:14px; font-size:12px; color:var(--wait); background:rgba(201,151,63,.08); padding:10px 14px; border-radius:6px; }
   .mtf-row { display:flex; gap:12px; font-size:13px; margin-bottom:8px; }
-  .mtf-label { width:32px; color:var(--muted); font-weight:600; }
+  .mtf-label { width:110px; color:var(--muted); font-weight:600; }
   table { width:100%; border-collapse:collapse; font-size:13px; }
   th { text-align:left; color:var(--muted); font-size:11px; padding:8px 10px; border-bottom:1px solid var(--border); text-transform:uppercase; }
   td { padding:9px 10px; border-bottom:1px solid var(--border); }
@@ -84,14 +85,18 @@
       </div>
       <div class="bar"><div class="fill" style="width:{{ latest.confluence_score }}%;"></div></div>
     </div>
+    {% if latest.block_reason %}
+      <div class="block-reason">WAIT car : {{ latest.block_reason }}</div>
+    {% endif %}
     {% if latest.invalidation %}<div style="margin-top:12px; font-size:12px; color:var(--muted);">Invalidation : {{ latest.invalidation }}</div>{% endif %}
   </div>
 
   <div class="card">
-    <div class="card-title">Contexte</div>
-    <div class="mtf-row"><div class="mtf-label">D1</div><div>{{ latest.d1_direction }}</div></div>
-    <div class="mtf-row"><div class="mtf-label">H4</div><div>{{ latest.h4_direction }}</div></div>
-    <div class="mtf-row"><div class="mtf-label">H1</div><div>{{ latest.h1_direction }}</div></div>
+    <div class="card-title">Contexte (ce que la decision regarde reellement)</div>
+    <div class="mtf-row"><div class="mtf-label">D1 tendance</div><div>{{ latest.d1_direction }}</div></div>
+    <div class="mtf-row"><div class="mtf-label">H4 tendance</div><div>{{ latest.h4_direction }}</div></div>
+    <div class="mtf-row"><div class="mtf-label">H1 tendance</div><div>{{ latest.h1_trend_direction }}</div></div>
+    <div class="mtf-row"><div class="mtf-label">H1 momentum</div><div><b style="color:var(--accent);">{{ latest.h1_momentum_direction }}</b></div></div>
     <div style="margin-top:10px; color:var(--muted); font-size:13px;">
       Regime : <b style="color:var(--text);">{{ latest.regime }}</b> ·
       Structure : <b style="color:var(--text);">{{ latest.structure_pattern }}</b> ·
