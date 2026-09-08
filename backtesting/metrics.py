@@ -10,6 +10,9 @@ def get_metrics(trades: list) -> dict:
     wins = [r for r in r_values if r > 0]
     losses = [r for r in r_values if r <= 0]
 
+    bullish_trades = sum(1 for t in trades if t["direction"] == "BULLISH")
+    bearish_trades = sum(1 for t in trades if t["direction"] == "BEARISH")
+
     win_rate = len(wins) / len(r_values) * 100
     expectancy = sum(r_values) / len(r_values)
 
@@ -43,5 +46,7 @@ def get_metrics(trades: list) -> dict:
         "avg_win": round(sum(wins) / len(wins), 2) if wins else None,
         "avg_loss": round(sum(losses) / len(losses), 2) if losses else None,
         "max_drawdown_R": round(max_drawdown, 2),
-        "max_consecutive_losses": max_consecutive_losses
+        "max_consecutive_losses": max_consecutive_losses,
+        "bullish_trades": bullish_trades,
+        "bearish_trades": bearish_trades
     }

@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, render_template
-import analysis
 import database
+from strategy.live import get_live_signal, ASSETS
 
 app = Flask(__name__)
 database.init_db()
@@ -8,13 +8,11 @@ database.init_db()
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
-    """Reçoit une alerte TradingView et déclenche l'analyse."""
     data = request.get_json(force=True, silent=True) or {}
     symbol = data.get("symbol", "XAUUSD").upper()
-    timeframe = data.get("timeframe", "H4").upper()
 
     try:
-        result = analysis.run_analysis(symbol, timeframe)
+        result = get_live_signal(symbol)
         database.save_signal(result)
         return jsonify(result), 200
     except Exception as e:
@@ -22,13 +20,18 @@ def webhook():
 
 
 @app.route("/analyze/<symbol>", methods=["GET"])
-@app.route("/analyze/<symbol>/<timeframe>", methods=["GET"])
-def analyze_manual(symbol, timeframe="H4"):
-    """Permet de déclencher une analyse manuellement (test, sans TradingView).
-    Exemples : /analyze/XAUUSD (H4 par défaut) ou /analyze/XAUUSD/H1
-    """
+def analyze_manual(symbol):
+    symbol = symbol.upper()
+    force = request.args.get("force", "false").lower() == "true"
+
+    if symbol in ASSETS and not ASSETS[symbol]["enabled"] and not force:
+        return jsonify({
+            "symbol": symbol,
+            "error": "actif desactive (validation walk-forward non passee). Ajoute ?force=true pour forcer."
+        }), 403
+
     try:
-        result = analysis.run_analysis(symbol.upper(), timeframe.upper())
+        result = get_live_signal(symbol)
         database.save_signal(result)
         return jsonify(result), 200
     except Exception as e:
@@ -46,6 +49,7 @@ def dashboard():
         signals=signals[:100],
         latest=latest,
         selected_symbol=selected_symbol,
+        assets=ASSETS
     )
 
 

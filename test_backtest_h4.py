@@ -5,6 +5,7 @@ from strategy.pipeline import strategy_signal
 from backtesting.engine import generate_trades
 from backtesting.metrics import get_metrics
 from backtesting.report import print_report
+from backtesting.baseline import get_buy_hold_return
 
 
 SYMBOLS = {
@@ -14,16 +15,19 @@ SYMBOLS = {
 }
 
 
-def load(yf_symbol):
-    df = yf.download(yf_symbol, period="5y", interval="1d", progress=False)
+def load_h4(yf_symbol):
+    df = yf.download(yf_symbol, period="730d", interval="1h", progress=False)
     if isinstance(df.columns, pd.MultiIndex):
         df.columns = df.columns.get_level_values(0)
+    df = df.resample("4h").agg(
+        {"Open": "first", "High": "max", "Low": "min", "Close": "last", "Volume": "sum"}
+    ).dropna()
     return df
 
 
 def main():
     for symbol, cfg in SYMBOLS.items():
-        df = load(cfg["yf"])
+        df = load_h4(cfg["yf"])
         split = int(len(df) * 0.7)
 
         all_trades = generate_trades(df, strategy_signal, min_bars=250, cost=cfg["cost"])
@@ -31,9 +35,12 @@ def main():
         train_trades = [t for t in all_trades if t["entry_index"] < split]
         test_trades = [t for t in all_trades if t["entry_index"] >= split]
 
-        print(f"\n=========== {symbol} ===========")
-        print_report(f"{symbol} - TRAIN (in-sample)", get_metrics(train_trades))
-        print_report(f"{symbol} - TEST (hors echantillon)", get_metrics(test_trades))
+        train_bh = get_buy_hold_return(df.iloc[:split])
+        test_bh = get_buy_hold_return(df.iloc[split:])
+
+        print(f"\n=========== {symbol} (H4, {len(df)} bougies) ===========")
+        print_report(f"{symbol} - TRAIN (in-sample)", get_metrics(train_trades), train_bh)
+        print_report(f"{symbol} - TEST (hors echantillon)", get_metrics(test_trades), test_bh)
 
 
 if __name__ == "__main__":

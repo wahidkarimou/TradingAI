@@ -1,5 +1,3 @@
-"""Stockage SQLite de l'historique des signaux générés."""
-
 import sqlite3
 import json
 from pathlib import Path
@@ -17,26 +15,23 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             timestamp TEXT NOT NULL,
             symbol TEXT NOT NULL,
-            timeframe TEXT NOT NULL DEFAULT 'H4',
-            signal TEXT NOT NULL,
-            confluence INTEGER,
-            setup_quality TEXT,
+            enabled INTEGER,
             price REAL,
+            signal TEXT NOT NULL,
+            confluence_score INTEGER,
+            confluence_breakdown TEXT,
             sl REAL,
             tp1 REAL,
             tp2 REAL,
             invalidation TEXT,
-            trend TEXT,
-            momentum TEXT,
-            rsi REAL,
-            support REAL,
-            resistance REAL,
             regime TEXT,
-            adx REAL,
             structure_pattern TEXT,
             bos TEXT,
-            volatility_state TEXT,
-            mtf_json TEXT
+            d1_direction TEXT,
+            h4_direction TEXT,
+            h1_direction TEXT,
+            rsi REAL,
+            atr REAL
         )
         """
     )
@@ -49,34 +44,31 @@ def save_signal(result: dict):
     conn.execute(
         """
         INSERT INTO signals
-        (timestamp, symbol, timeframe, signal, confluence, setup_quality, price, sl, tp1, tp2,
-         invalidation, trend, momentum, rsi, support, resistance, regime, adx,
-         structure_pattern, bos, volatility_state, mtf_json)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (timestamp, symbol, enabled, price, signal, confluence_score, confluence_breakdown,
+         sl, tp1, tp2, invalidation, regime, structure_pattern, bos,
+         d1_direction, h4_direction, h1_direction, rsi, atr)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             datetime.utcnow().isoformat(timespec="seconds"),
             result["symbol"],
-            result.get("timeframe", "H4"),
-            result["signal"],
-            result.get("confluence"),
-            result.get("setup_quality"),
+            1 if result.get("enabled") else 0,
             result["price"],
-            result["sl"],
+            result["signal"],
+            result["confluence_score"],
+            json.dumps(result.get("confluence_breakdown", {})),
+            result.get("sl"),
             result.get("tp1"),
             result.get("tp2"),
             result.get("invalidation"),
-            result["trend"],
-            result["momentum"],
-            result["rsi"],
-            result["support"],
-            result["resistance"],
             result.get("regime"),
-            result.get("adx"),
             result.get("structure_pattern"),
             result.get("bos"),
-            result.get("volatility_state"),
-            json.dumps(result.get("mtf", {})),
+            result.get("d1_direction"),
+            result.get("h4_direction"),
+            result.get("h1_direction"),
+            result.get("rsi"),
+            result.get("atr"),
         ),
     )
     conn.commit()
@@ -94,8 +86,8 @@ def get_all_signals(limit: int = 100):
     for row in rows:
         d = dict(row)
         try:
-            d["mtf"] = json.loads(d.get("mtf_json") or "{}")
+            d["confluence_breakdown"] = json.loads(d.get("confluence_breakdown") or "{}")
         except (TypeError, ValueError):
-            d["mtf"] = {}
+            d["confluence_breakdown"] = {}
         results.append(d)
     return results
