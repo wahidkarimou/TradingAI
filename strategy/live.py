@@ -31,6 +31,10 @@ def _flatten(df):
 
 def _fetch(yf_symbol, period, interval):
     df = yf.download(yf_symbol, period=period, interval=interval, progress=False)
+    if df.empty:
+        import time
+        time.sleep(3)
+        df = yf.download(yf_symbol, period=period, interval=interval, progress=False)
     return _flatten(df)
 
 
