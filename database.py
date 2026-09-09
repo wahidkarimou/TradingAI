@@ -95,3 +95,12 @@ def get_all_signals(limit: int = 100):
             d["confluence_breakdown"] = {}
         results.append(d)
     return results
+
+def get_last_signal(symbol: str):
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    row = conn.execute(
+        "SELECT * FROM signals WHERE symbol = ? ORDER BY id DESC LIMIT 1", (symbol,)
+    ).fetchone()
+    conn.close()
+    return dict(row) if row else None

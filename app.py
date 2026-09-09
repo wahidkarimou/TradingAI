@@ -1,19 +1,32 @@
 from flask import Flask, request, jsonify, render_template
 import database
 from strategy.live import get_live_signal, ASSETS
+from notify import send_signal_email
 
 app = Flask(__name__)
 database.init_db()
+
+
+def _process(symbol):
+    previous = database.get_last_signal(symbol)
+    result = get_live_signal(symbol)
+    database.save_signal(result)
+
+    is_actionable = result["signal"] in ("BULLISH", "BEARISH")
+    changed = previous is None or previous.get("signal") != result["signal"]
+
+    if is_actionable and changed:
+        send_signal_email(result)
+
+    return result
 
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
     data = request.get_json(force=True, silent=True) or {}
     symbol = data.get("symbol", "XAUUSD").upper()
-
     try:
-        result = get_live_signal(symbol)
-        database.save_signal(result)
+        result = _process(symbol)
         return jsonify(result), 200
     except Exception as e:
         return jsonify({"error": str(e), "symbol": symbol}), 500
@@ -31,8 +44,7 @@ def analyze_manual(symbol):
         }), 403
 
     try:
-        result = get_live_signal(symbol)
-        database.save_signal(result)
+        result = _process(symbol)
         return jsonify(result), 200
     except Exception as e:
         return jsonify({"error": str(e), "symbol": symbol}), 500
