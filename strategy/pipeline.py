@@ -42,11 +42,8 @@ def strategy_signal(history, threshold: int = 60) -> dict | None:
         return None
 
     return {
-        "direction": direction,
-        "entry": entry,
-        "sl": risk_result["sl"],
-        "tp1": risk_result["tp1"],
-        "score": confluence_result["score"]
+        "direction": direction, "entry": entry, "sl": risk_result["sl"],
+        "tp1": risk_result["tp1"], "score": confluence_result["score"]
     }
 
 
@@ -87,9 +84,6 @@ def strategy_signal_mtf(h1_history, d1_direction: str, h4_direction: str, thresh
         return None
 
     return {
-        "direction": direction,
-        "entry": entry,
-        "sl": risk_result["sl"],
-        "tp1": risk_result["tp1"],
-        "score": confluence_result["score"]
+        "direction": direction, "entry": entry, "sl": risk_result["sl"],
+        "tp1": risk_result["tp1"], "score": confluence_result["score"]
     }

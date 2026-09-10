@@ -134,7 +134,8 @@ def generate_trades_mtf(
             continue
 
         history = h1_df.iloc[max(0, i - 300) : i + 1]
-        decision = signal_fn(history, d1_direction, h4_direction)
+        h4_slice = h4_df[h4_df.index <= history.index[-1]].iloc[-300:]
+        decision = signal_fn(history, d1_direction, h4_direction, h4_slice)
 
         if decision is None or decision.get("direction") not in ("BULLISH", "BEARISH"):
             i += 1
@@ -179,7 +180,8 @@ def generate_trades_mtf(
         trades.append({
             "entry_index": i, "exit_index": exit_index, "direction": direction,
             "entry": round(entry, 5), "exit": round(adjusted_exit, 5),
-            "exit_reason": exit_reason, "r_multiple": round(r_multiple, 2)
+            "exit_reason": exit_reason, "r_multiple": round(r_multiple, 2),
+            "signal_type": decision.get("signal_type")
         })
 
         i = exit_index + 1
