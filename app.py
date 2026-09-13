@@ -69,6 +69,10 @@ def dashboard():
 def api_signals():
     return jsonify(database.get_all_signals(limit=100))
 
+@app.route("/health", methods=["GET"])
+def health():
+    return "OK", 200
+
 
 if __name__ == "__main__":
     import os
